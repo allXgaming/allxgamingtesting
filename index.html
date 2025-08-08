@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>World X Festival</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+      color: white;
+      padding: 5px;
+    }
+    header { text-align: center; margin-bottom: 10px; padding: 5px 0; }
+    header h1 { font-size: 2rem; text-shadow: 0 0 5px cyan; }
+    .search-box { max-width: 350px; margin: 10px auto; }
+    .search-box input { width: 100%; padding: 8px; border-radius: 20px; border: none; outline: none; font-size: 0.9rem; text-align: center; background: rgba(255, 255, 255, 0.1); color: white; }
+    section { margin-top: 15px; }
+    section h2 { font-size: 1.4rem; margin-bottom: 10px; border-left: 3px solid #00f2ff; padding-left: 8px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 20px; }
+    .card { text-align: center; cursor: pointer; transition: transform 0.2s; }
+    .card:hover { transform: scale(1.05); }
+    .game-card { display: flex; flex-direction: column; align-items: center; }
+    .game-card-logo { width: 85px; height: 85px; object-fit: cover; margin-bottom: 8px; border-radius: 10px; }
+    .game-card h3 { font-size: 1.05rem; text-shadow: 0 0 5px #fff, 0 0 10px #00f2ff, 0 0 20px #ff00ff; }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); z-index: 2000; }
+    .modal.visible { display: flex; }
+    .modal iframe { width: 100%; height: 100%; border: none; }
+    .modal-close { position: absolute; top: 5px; right: 10px; font-size: 1.8rem; color: white; cursor: pointer; z-index: 2001; }
+    @media (max-width: 500px) {
+      header h1 { font-size: 1.8rem; }
+      section h2 { font-size: 1.3rem; }
+      .card-grid { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 15px; }
+      .game-card-logo { width: 75px; height: 75px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>World X Festival</h1>
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search by festival, month, or country...">
+    </div>
+  </header>
+
+  <section id="this-month-section">
+    <h2 id="main-section-title">This Month's Festivals</h2>
+    <div class="card-grid" id="games-grid"></div>
+  </section>
+  <section id="coming-soon-section">
+    <h2>Coming Soon</h2>
+    <div class="card-grid" id="coming-soon-grid"></div>
+  </section>
+  <section id="daily-use-section">
+    <h2>Daily Use</h2>
+    <div class="card-grid" id="daily-use-grid"></div>
+  </section>
+
+  <div id="game-modal" class="modal">
+    <span class="modal-close" id="modal-close-btn">×</span>
+    <iframe id="game-iframe"></iframe>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDHB9nPSUXju9iWNlaAsze1dsvZkD9iYLw",
+        authDomain: "worldxfestival.firebaseapp.com",
+        databaseURL: "https://worldxfestival-default-rtdb.firebaseio.com",
+        projectId: "worldxfestival",
+        storageBucket: "worldxfestival.firebasestorage.app",
+        messagingSenderId: "1008928581835",
+        appId: "1:1008928581835:web:345ec7913d27b15adad34e",
+        measurementId: "G-L6Y4XTE78X"
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let allItems = [];
+    let currentItemId = null; // নতুন গ্লোবাল ভেরিয়েবল
+    const searchInput = document.getElementById('searchInput');
+    const mainSectionTitle = document.getElementById('main-section-title');
+    const gameModal = document.getElementById('game-modal');
+    const gameIframe = document.getElementById('game-iframe');
+
+    function openModalWithItem(item) {
+        if (!item || !item.htmlCode) {
+            console.error("Item not found or has no htmlCode.");
+            return;
+        }
+        database.ref(`${item.category}/${item.id}/views`).transaction(v => (v || 0) + 1);
+        currentItemId = item.id; // বর্তমান আইটেমের আইডি সেট করা হচ্ছে
+        const fullScreenCss = '<style>html,body{margin:0;padding:0;height:100%;width:100%;overflow-y:auto;}</style>';
+        gameIframe.srcdoc = fullScreenCss + item.htmlCode;
+        gameModal.classList.add('visible');
+    }
+
+    function renderItems(gridElement, itemsToRender, categoryName) {
+        gridElement.innerHTML = '';
+        const section = gridElement.closest('section');
+        if (itemsToRender.length === 0) {
+            if(section) section.style.display = 'none';
+            return;
+        }
+        if(section) section.style.display = 'block';
+
+        itemsToRender.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card game-card';
+            card.innerHTML = `
+                <img src="${item.logoUrl || 'https://via.placeholder.com/100'}" alt="${item.title} Logo" class="game-card-logo" onerror="this.src='https://via.placeholder.com/100'">
+                <h3>${item.title}</h3>
+            `;
+            card.addEventListener('click', () => openModalWithItem({ ...item, category: categoryName }));
+            gridElement.appendChild(card);
+        });
+    }
+
+    function loadAllData() {
+        const now = new Date();
+        const currentMonthName = now.toLocaleDateString('en-US', { month: 'long' });
+        mainSectionTitle.textContent = `${currentMonthName} Festivals`;
+        const monthOrder = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+        const nextMonthName = monthOrder[(now.getMonth() + 1) % 12];
+
+        database.ref().once('value', snapshot => {
+            const dbData = snapshot.val();
+            if(!dbData) return;
+
+            const festivalItems = dbData.games ? Object.entries(dbData.games).map(([id, val]) => ({ id, ...val, category: 'games' })) : [];
+            const dailyUseItems = dbData.dailyUse ? Object.entries(dbData.dailyUse).map(([id, val]) => ({ id, ...val, category: 'dailyUse' })) : [];
+            const manualComingSoonItems = dbData.comingSoon ? Object.entries(dbData.comingSoon).map(([id, val]) => ({ id, ...val, category: 'comingSoon' })) : [];
+            
+            allItems = [...festivalItems, ...dailyUseItems, ...manualComingSoonItems];
+
+            const thisMonthFestivals = festivalItems.filter(item => item.month && item.month.toLowerCase() === currentMonthName.toLowerCase());
+            renderItems(document.getElementById('games-grid'), thisMonthFestivals, 'games');
+            
+            renderItems(document.getElementById('daily-use-grid'), dailyUseItems, 'dailyUse');
+
+            const nextMonthFestivals = festivalItems.filter(item => item.month && item.month.toLowerCase() === nextMonthName);
+            const combinedComingSoon = [...manualComingSoonItems, ...nextMonthFestivals.filter(nmf => !manualComingSoonItems.some(mcs => mcs.id === nmf.id))];
+            renderItems(document.getElementById('coming-soon-grid'), combinedComingSoon, 'comingSoon');
+
+            // URL থেকে প্যারামিটার চেক করে পপ-আপ খোলার যুক্তি
+            const urlParams = new URLSearchParams(window.location.search);
+            const itemToOpen = urlParams.get('open');
+            if (itemToOpen) {
+                const foundItem = allItems.find(item => item.id === itemToOpen);
+                if (foundItem) {
+                    openModalWithItem(foundItem);
+                }
+            }
+        });
+    }
+
+    function handleSearch() {
+        const query = searchInput.value.trim().toLowerCase();
+        
+        ['this-month-section', 'daily-use-section', 'coming-soon-section'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+
+        if (!query) {
+            loadAllData();
+            return;
+        }
+        
+        mainSectionTitle.textContent = `Search Results`;
+        let filteredItems = allItems.filter(item => 
+            (item.title && item.title.toLowerCase().includes(query)) ||
+            (item.month && item.month.toLowerCase().includes(query)) ||
+            (item.country && item.country.toLowerCase().includes(query))
+        );
+        renderItems(document.getElementById('games-grid'), filteredItems, 'games');
+    }
+
+    function init() {
+      loadAllData();
+      searchInput.addEventListener('input', handleSearch);
+      document.getElementById('modal-close-btn').addEventListener('click', () => {
+          gameModal.classList.remove('visible');
+          gameIframe.srcdoc = '';
+          currentItemId = null; // আইডি রিসেট করা
+          // URL থেকে প্যারামিটার মুছে ফেলা হচ্ছে
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('open');
+          newUrl.searchParams.delete('name');
+          newUrl.searchParams.delete('msg');
+          window.history.pushState({}, '', newUrl);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
