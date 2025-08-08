@@ -85,19 +85,38 @@
     const database = firebase.database();
 
     let allItems = [];
-    let currentItemId = null; // নতুন গ্লোবাল ভেরিয়েবল
+    window.currentItemId = null; // গ্লোবাল করা হয়েছে যাতে iframe থেকে পাওয়া যায়
     const searchInput = document.getElementById('searchInput');
     const mainSectionTitle = document.getElementById('main-section-title');
     const gameModal = document.getElementById('game-modal');
     const gameIframe = document.getElementById('game-iframe');
 
+    // *** এই ফাংশনটিতে মূল পরিবর্তন করা হয়েছে ***
     function openModalWithItem(item) {
         if (!item || !item.htmlCode) {
             console.error("Item not found or has no htmlCode.");
             return;
         }
         database.ref(`${item.category}/${item.id}/views`).transaction(v => (v || 0) + 1);
-        currentItemId = item.id; // বর্তমান আইটেমের আইডি সেট করা হচ্ছে
+        
+        window.currentItemId = item.id; // বর্তমান আইটেমের আইডি সেট করা হচ্ছে
+
+        // --- নতুন সংযোজন: ক্লিক করার সাথে সাথেই URL আপডেট করা হচ্ছে ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.set('open', item.id); // 'open' প্যারামিটার যোগ করা
+        
+        // যদি URL-এ আগে থেকেই নাম/মেসেজ থাকে, সেগুলি রেখে দেওয়া হচ্ছে
+        if (urlParams.has('name')) {
+            currentUrl.searchParams.set('name', urlParams.get('name'));
+        }
+        if (urlParams.has('msg')) {
+            currentUrl.searchParams.set('msg', urlParams.get('msg'));
+        }
+        // URL পরিবর্তন করা হচ্ছে, কিন্তু ব্রাউজার হিস্ট্রিতে নতুন এন্ট্রি যোগ না করে
+        window.history.replaceState({}, '', currentUrl);
+        // -----------------------------------------------------------
+
         const fullScreenCss = '<style>html,body{margin:0;padding:0;height:100%;width:100%;overflow-y:auto;}</style>';
         gameIframe.srcdoc = fullScreenCss + item.htmlCode;
         gameModal.classList.add('visible');
@@ -150,11 +169,11 @@
             const combinedComingSoon = [...manualComingSoonItems, ...nextMonthFestivals.filter(nmf => !manualComingSoonItems.some(mcs => mcs.id === nmf.id))];
             renderItems(document.getElementById('coming-soon-grid'), combinedComingSoon, 'comingSoon');
 
-            // URL থেকে প্যারামিটার চেক করে পপ-আপ খোলার যুক্তি
+            // URL থেকে 'open' প্যারামিটার চেক করে পপ-আপ খোলার যুক্তি
             const urlParams = new URLSearchParams(window.location.search);
-            const itemToOpen = urlParams.get('open');
-            if (itemToOpen) {
-                const foundItem = allItems.find(item => item.id === itemToOpen);
+            const itemToOpenId = urlParams.get('open');
+            if (itemToOpenId) {
+                const foundItem = allItems.find(item => item.id === itemToOpenId);
                 if (foundItem) {
                     openModalWithItem(foundItem);
                 }
@@ -170,11 +189,13 @@
         });
 
         if (!query) {
-            loadAllData();
+            loadAllData(); // কোনো কোয়েরি না থাকলে আবার সব ডেটা লোড হবে
             return;
         }
         
         mainSectionTitle.textContent = `Search Results`;
+        document.getElementById('this-month-section').style.display = 'block';
+        
         let filteredItems = allItems.filter(item => 
             (item.title && item.title.toLowerCase().includes(query)) ||
             (item.month && item.month.toLowerCase().includes(query)) ||
@@ -182,20 +203,17 @@
         );
         renderItems(document.getElementById('games-grid'), filteredItems, 'games');
     }
-
+    
     function init() {
       loadAllData();
       searchInput.addEventListener('input', handleSearch);
       document.getElementById('modal-close-btn').addEventListener('click', () => {
           gameModal.classList.remove('visible');
           gameIframe.srcdoc = '';
-          currentItemId = null; // আইডি রিসেট করা
-          // URL থেকে প্যারামিটার মুছে ফেলা হচ্ছে
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('open');
-          newUrl.searchParams.delete('name');
-          newUrl.searchParams.delete('msg');
-          window.history.pushState({}, '', newUrl);
+          window.currentItemId = null; // আইডি রিসেট করা
+          
+          // URL থেকে সব প্যারামিটার মুছে ফেলা হচ্ছে
+          window.history.pushState({}, '', window.location.pathname);
       });
     }
 
