@@ -48,6 +48,7 @@
       margin-bottom: 12px;
       cursor: pointer;
       transition: 0.2s;
+      position: relative; /* Share button positioning */
     }
     .guide-card:hover {
       border-color: #58a6ff;
@@ -57,6 +58,7 @@
       margin: 0 0 5px;
       font-size: 18px;
       color: #e6edf3;
+      padding-right: 60px; /* Space for the share button */
     }
     .guide-card p {
       margin: 0;
@@ -78,19 +80,30 @@
       margin-bottom: 15px;
       color: #58a6ff;
     }
-    #backBtn {
-      background: #238636;
+    #backBtn, .share-btn { /* Shared style for buttons */
       border: none;
       color: white;
       padding: 8px 15px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
-      margin-bottom: 10px;
       transition: 0.2s;
+    }
+    #backBtn {
+      background: #238636;
+      margin-bottom: 10px;
     }
     #backBtn:hover {
       background: #2ea043;
+    }
+    .share-btn {
+      background: #30363d;
+      position: absolute;
+      top: 15px;
+      right: 15px;
+    }
+    .share-btn:hover {
+      background: #48515c;
     }
     footer {
       text-align: center;
@@ -117,6 +130,7 @@
 
   <section id="guideView">
     <button id="backBtn">← Back</button>
+    <!-- Share button for the opened guide will be added here by JS -->
     <h2 id="guideTitle"></h2>
     <div id="guideContent"></div>
   </section>
@@ -130,7 +144,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-    // 🔥 Firebase Config (Replace with yours)
+    // 🔥 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDGGcO1HOeI3bRx_lD3CbX2FeE3yzOMgcQ",
       authDomain: "allxworldstore.firebaseapp.com",
@@ -153,24 +167,69 @@
     const guideContentEl = document.getElementById("guideContent");
     const backBtn = document.getElementById("backBtn");
 
-    // Load Guides from Firestore
+    // NEW: Share Guide Function
+    async function shareGuide(id, title) {
+      // Create the unique URL with a hash (#)
+      const url = `${window.location.origin}${window.location.pathname}#${id}`;
+      const shareData = {
+        title: `All X Guide: ${title}`,
+        text: `Check out this guide for "${title}" on All X Guide Center!`,
+        url: url,
+      };
+
+      // Use modern Web Share API if available
+      if (navigator.share) {
+        try {
+          await navigator.share(shareData);
+        } catch (err) {
+          console.error("Share failed:", err);
+        }
+      } else {
+        // Fallback: Copy to clipboard
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("Link copied to clipboard!");
+        } catch (err) {
+          console.error("Failed to copy:", err);
+          alert("Could not copy link.");
+        }
+      }
+    }
+
+    // MODIFIED: Load Guides from Firestore
     async function loadGuides() {
+      guideListEl.style.display = "block"; // Ensure list is visible
+      guideViewEl.style.display = "none";  // Ensure guide view is hidden
+
       const querySnapshot = await getDocs(collection(db, "guides"));
       guideListEl.innerHTML = "";
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const card = document.createElement("div");
         card.className = "guide-card";
+        
+        // Add a share button to each card
         card.innerHTML = `
+          <button class="share-btn">Share</button>
           <h2>${data.title}</h2>
           <p>${data.shortDesc}</p>
         `;
+        
+        // The card itself still opens the guide
         card.onclick = () => openGuide(docSnap.id);
+        
+        // The share button calls the share function
+        const shareBtn = card.querySelector(".share-btn");
+        shareBtn.onclick = (event) => {
+          event.stopPropagation(); // Prevents the card's click event from firing
+          shareGuide(docSnap.id, data.title);
+        };
+
         guideListEl.appendChild(card);
       });
     }
 
-    // Open Single Guide
+    // MODIFIED: Open Single Guide
     async function openGuide(id) {
       const docRef = doc(db, "guides", id);
       const docSnap = await getDoc(docRef);
@@ -179,21 +238,55 @@
         const data = docSnap.data();
         guideTitleEl.textContent = data.title;
         guideContentEl.innerHTML = data.content;
+        
+        // NEW: Add a share button inside the guide view
+        // First, remove any old share button
+        const oldShareBtn = guideViewEl.querySelector('.share-btn');
+        if (oldShareBtn) {
+            oldShareBtn.remove();
+        }
+        // Then, create and add the new one
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'share-btn';
+        shareBtn.textContent = 'Share';
+        shareBtn.style.position = 'static'; // Override absolute positioning
+        shareBtn.style.float = 'right'; // Position it nicely
+        shareBtn.onclick = () => shareGuide(docSnap.id, data.title);
+        backBtn.insertAdjacentElement('afterend', shareBtn); // Place it after the back button
+
+        // Update URL hash without reloading the page
+        window.location.hash = id;
+
         guideListEl.style.display = "none";
         guideViewEl.style.display = "block";
       } else {
         alert("Guide not found!");
+        window.location.hash = ''; // Clear invalid hash
+        loadGuides(); // Show the list again
       }
     }
 
-    // Back Button
+    // MODIFIED: Back Button
     backBtn.onclick = () => {
       guideViewEl.style.display = "none";
       guideListEl.style.display = "block";
+      // Clear the URL hash when going back to the list
+      history.pushState("", document.title, window.location.pathname + window.location.search);
     };
 
-    // Load on Start
-    loadGuides();
+    // MODIFIED: Load on Start
+    function handleInitialLoad() {
+      const guideIdFromUrl = window.location.hash.substring(1); // Get id from URL, remove '#'
+      if (guideIdFromUrl) {
+        // If there's an ID in the URL, open that guide directly
+        openGuide(guideIdFromUrl);
+      } else {
+        // Otherwise, load the full list of guides
+        loadGuides();
+      }
+    }
+
+    handleInitialLoad(); // Run the new initial load function
   </script>
 </body>
 </html>
