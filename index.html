@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>All X Guide Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kalam:wght@300;400&display=swap" rel="stylesheet">
 
   <style>
     * {
@@ -11,9 +14,9 @@
     }
     body {
       margin: 0;
-      font-family: "Segoe UI", sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f6f8fa;
+      color: #24292e;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -23,104 +26,183 @@
       width: 100%;
       text-align: center;
       padding: 25px 0;
-      background: #161b22;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+      background: #ffffff;
+      border-bottom: 1px solid #e1e4e8;
     }
     header h1 {
       margin: 0;
-      color: #58a6ff;
+      color: #0366d6;
       font-size: 26px;
+      font-family: 'Kalam', cursive;
+      font-weight: 400;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    header h1::before {
+        content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="%230366d6" d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z"/></svg>');
     }
     header p {
-      color: #8b949e;
+      color: #586069;
       font-size: 14px;
+      font-family: 'Kalam', cursive;
+      font-weight: 300;
     }
     main {
       width: 90%;
       max-width: 800px;
       margin-top: 20px;
     }
+    main > p {
+        font-family: 'Kalam', cursive;
+        font-size: 20px;
+        color: #586069;
+        text-align: center;
+        padding-top: 20px;
+    }
     .guide-card {
-      background: #161b22;
-      border: 1px solid #30363d;
+      background: #ffffff;
+      border: 1px solid #d1d5da;
       border-radius: 10px;
       padding: 15px;
       margin-bottom: 12px;
       cursor: pointer;
-      transition: 0.2s;
-      position: relative; /* Share button positioning */
+      transition: all 0.2s ease-in-out;
+      position: relative;
     }
     .guide-card:hover {
-      border-color: #58a6ff;
-      background: #1e2631;
+      border-color: #0366d6;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
     }
     .guide-card h2 {
       margin: 0 0 5px;
-      font-size: 18px;
-      color: #e6edf3;
-      padding-right: 60px; /* Space for the share button */
+      font-size: 22px;
+      color: #24292e;
+      font-family: 'Kalam', cursive; /* New Font */
+      font-weight: 400;
+      padding-right: 40px; /* Space for share button */
     }
     .guide-card p {
       margin: 0;
-      font-size: 13px;
-      color: #8b949e;
+      font-size: 14px;
+      color: #586069;
+      font-family: 'Kalam', cursive; /* New Font */
+      font-weight: 300;
     }
+    
+    /* === NEW SHARE BUTTON ON CARD === */
+    .card-share-btn {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 32px;
+        height: 32px;
+        background-color: #f6f8fa;
+        border: 1px solid #d1d5da;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    .card-share-btn:hover {
+        background-color: #e1e4e8;
+    }
+    .card-share-btn svg {
+        fill: #444d56;
+    }
+    
     #guideView {
       display: none;
-      animation: fadeIn 0.3s ease;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 10px;
-      padding: 20px;
+      background: #ffffff;
+      border: 1px solid #e1e4e8;
+      border-radius: 12px;
+      padding: 25px 30px;
       margin-bottom: 20px;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
     }
-    #guideTitle {
-      font-size: 20px;
-      font-weight: bold;
+    #guideView::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #6f42c1, #007bff);
+    }
+    .guide-view-header {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
       margin-bottom: 15px;
-      color: #58a6ff;
     }
-    #backBtn, .share-btn { /* Shared style for buttons */
-      border: none;
-      color: white;
+    #backBtn {
+      border: 1px solid #d1d5da;
+      color: #24292e;
       padding: 8px 15px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
       transition: 0.2s;
-    }
-    #backBtn {
-      background: #238636;
-      margin-bottom: 10px;
+      background-color: #f6f8fa;
     }
     #backBtn:hover {
-      background: #2ea043;
+      background-color: #e1e4e8;
     }
-    .share-btn {
-      background: #30363d;
-      position: absolute;
-      top: 15px;
-      right: 15px;
+    
+    #guideContent h2 {
+        text-align: center; font-size: 36px; font-weight: bold;
+        background: linear-gradient(90deg, #6f42c1, #007bff);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        margin-bottom: 10px;
     }
-    .share-btn:hover {
-      background: #48515c;
+    #guideContent h3 {
+        text-align: center; font-size: 24px; color: #24292e;
+        font-weight: 500; margin-top: 0; margin-bottom: 5px;
     }
+    #guideContent p.date {
+        text-align: center; color: #586069; margin-bottom: 30px;
+    }
+    #guideContent ul { list-style: none; padding-left: 5px; }
+    #guideContent > ul > li {
+        font-size: 16px; font-weight: 600; color: #24292e;
+        margin-top: 20px; padding-left: 20px;
+    }
+    #guideContent > ul > li::before {
+        content: "●"; color: #d73a49; display: inline-block;
+        width: 1em; margin-left: -1.2em; font-size: 14px;
+    }
+    #guideContent > ul > li > ul { margin-top: 10px; }
+    #guideContent > ul > li > ul > li { font-weight: 500; padding-left: 20px; }
+    #guideContent > ul > li > ul > li::before {
+        content: "○"; color: #586069; display: inline-block;
+        width: 1em; margin-left: -1.2em; font-weight: bold;
+    }
+    #guideContent > ul > li > ul > li > ul { margin-top: 10px; }
+    #guideContent > ul > li > ul > li > ul > li {
+        font-weight: normal; color: #444d56; padding-left: 20px;
+    }
+    #guideContent > ul > li > ul > li > ul > li::before {
+        content: "■"; color: #24292e; display: inline-block;
+        width: 1em; margin-left: -1.2em; font-size: 10px;
+    }
+
     footer {
-      text-align: center;
-      padding: 15px 0;
-      color: #8b949e;
-      font-size: 13px;
-      margin-top: auto;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(8px);}
-      to {opacity: 1; transform: translateY(0);}
+      width: 100%; text-align: center; padding: 15px 0;
+      color: #586069; font-size: 13px; margin-top: auto;
+      border-top: 1px solid #e1e4e8; background: #ffffff;
+      font-family: 'Kalam', cursive; font-weight: 300;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>📘 All X Guide Center</h1>
+    <h1>All X Guide Center</h1>
     <p>Learn how to use every All X App easily</p>
   </header>
 
@@ -129,9 +211,9 @@
   </main>
 
   <section id="guideView">
-    <button id="backBtn">← Back</button>
-    <!-- Share button for the opened guide will be added here by JS -->
-    <h2 id="guideTitle"></h2>
+    <div class="guide-view-header">
+        <button id="backBtn">← Back</button>
+    </div>
     <div id="guideContent"></div>
   </section>
 
@@ -140,11 +222,9 @@
   </footer>
 
   <script type="module">
-    // Import Firebase Modules
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-    // 🔥 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyDGGcO1HOeI3bRx_lD3CbX2FeE3yzOMgcQ",
       authDomain: "allxworldstore.firebaseapp.com",
@@ -156,20 +236,16 @@
       measurementId: "G-GBWZKBFY6Q"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Elements
+    const headerEl = document.querySelector("header");
     const guideListEl = document.getElementById("guideList");
-    const guideViewEl = document.getElementById("guideView");
-    const guideTitleEl = document.getElementById("guideTitle");
+    const guideViewEl = document.getElementById("guideView"); 
     const guideContentEl = document.getElementById("guideContent");
     const backBtn = document.getElementById("backBtn");
-
-    // NEW: Share Guide Function
+    
     async function shareGuide(id, title) {
-      // Create the unique URL with a hash (#)
       const url = `${window.location.origin}${window.location.pathname}#${id}`;
       const shareData = {
         title: `All X Guide: ${title}`,
@@ -177,51 +253,44 @@
         url: url,
       };
 
-      // Use modern Web Share API if available
       if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-        } catch (err) {
-          console.error("Share failed:", err);
-        }
+        await navigator.share(shareData).catch(err => console.error("Share failed:", err));
       } else {
-        // Fallback: Copy to clipboard
-        try {
-          await navigator.clipboard.writeText(url);
-          alert("Link copied to clipboard!");
-        } catch (err) {
-          console.error("Failed to copy:", err);
-          alert("Could not copy link.");
-        }
+        await navigator.clipboard.writeText(url).then(() => alert("Link copied to clipboard!")).catch(err => alert("Could not copy link."));
       }
     }
 
-    // MODIFIED: Load Guides from Firestore
     async function loadGuides() {
-      guideListEl.style.display = "block"; // Ensure list is visible
-      guideViewEl.style.display = "none";  // Ensure guide view is hidden
+      headerEl.style.display = "block";
+      guideListEl.style.display = "block";
+      guideViewEl.style.display = "none";
 
       const querySnapshot = await getDocs(collection(db, "guides"));
-      guideListEl.innerHTML = "";
+      guideListEl.innerHTML = ""; // Clear loading message
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const card = document.createElement("div");
         card.className = "guide-card";
         
-        // Add a share button to each card
+        // Add card content and share button
         card.innerHTML = `
-          <button class="share-btn">Share</button>
+          <button class="card-share-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M4.715 6.542 3.343 7.914a3 3 0 1 0 4.243 4.243l1.828-1.829A3 3 0 0 0 8.586 5.5L8 6.086a1.002 1.002 0 0 0-.154.199 2 2 0 0 1 .861 3.337L6.88 11.45a2 2 0 1 1-2.83-2.83l.793-.792a4.018 4.018 0 0 1-.128-1.287z"/>
+              <path d="M6.586 4.672A3 3 0 0 0 7.414 9.5l.775-.776a2 2 0 0 1-.896-3.346L9.12 3.55a2 2 0 1 1 2.83 2.83l-.793.792c.112.42.155.855.128 1.287l1.372-1.372a3 3 0 1 0-4.243-4.243L6.586 4.672z"/>
+            </svg>
+          </button>
           <h2>${data.title}</h2>
           <p>${data.shortDesc}</p>
         `;
         
-        // The card itself still opens the guide
+        // Main card click event
         card.onclick = () => openGuide(docSnap.id);
         
-        // The share button calls the share function
-        const shareBtn = card.querySelector(".share-btn");
+        // Share button click event
+        const shareBtn = card.querySelector(".card-share-btn");
         shareBtn.onclick = (event) => {
-          event.stopPropagation(); // Prevents the card's click event from firing
+          event.stopPropagation(); // Prevents card.onclick from firing
           shareGuide(docSnap.id, data.title);
         };
 
@@ -229,64 +298,43 @@
       });
     }
 
-    // MODIFIED: Open Single Guide
     async function openGuide(id) {
       const docRef = doc(db, "guides", id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        guideTitleEl.textContent = data.title;
         guideContentEl.innerHTML = data.content;
         
-        // NEW: Add a share button inside the guide view
-        // First, remove any old share button
-        const oldShareBtn = guideViewEl.querySelector('.share-btn');
-        if (oldShareBtn) {
-            oldShareBtn.remove();
-        }
-        // Then, create and add the new one
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'share-btn';
-        shareBtn.textContent = 'Share';
-        shareBtn.style.position = 'static'; // Override absolute positioning
-        shareBtn.style.float = 'right'; // Position it nicely
-        shareBtn.onclick = () => shareGuide(docSnap.id, data.title);
-        backBtn.insertAdjacentElement('afterend', shareBtn); // Place it after the back button
-
-        // Update URL hash without reloading the page
         window.location.hash = id;
-
+        
+        headerEl.style.display = "none";
         guideListEl.style.display = "none";
         guideViewEl.style.display = "block";
       } else {
         alert("Guide not found!");
-        window.location.hash = ''; // Clear invalid hash
-        loadGuides(); // Show the list again
-      }
-    }
-
-    // MODIFIED: Back Button
-    backBtn.onclick = () => {
-      guideViewEl.style.display = "none";
-      guideListEl.style.display = "block";
-      // Clear the URL hash when going back to the list
-      history.pushState("", document.title, window.location.pathname + window.location.search);
-    };
-
-    // MODIFIED: Load on Start
-    function handleInitialLoad() {
-      const guideIdFromUrl = window.location.hash.substring(1); // Get id from URL, remove '#'
-      if (guideIdFromUrl) {
-        // If there's an ID in the URL, open that guide directly
-        openGuide(guideIdFromUrl);
-      } else {
-        // Otherwise, load the full list of guides
+        window.location.hash = '';
         loadGuides();
       }
     }
 
-    handleInitialLoad(); // Run the new initial load function
+    backBtn.onclick = () => {
+      headerEl.style.display = "block";
+      guideViewEl.style.display = "none";
+      guideListEl.style.display = "block";
+      history.pushState("", document.title, window.location.pathname + window.location.search);
+    };
+
+    function handleInitialLoad() {
+      const guideIdFromUrl = window.location.hash.substring(1);
+      if (guideIdFromUrl) {
+        openGuide(guideIdFromUrl);
+      } else {
+        loadGuides();
+      }
+    }
+
+    handleInitialLoad();
   </script>
 </body>
 </html>
